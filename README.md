@@ -30,3 +30,14 @@ You can create these either manually, or from a SPARQL query:
 medrs query 'SELECT ?article {?article wdt:P31 wd:Q45182324}'
 ```
 This will run the SPARQL query, and output the items returned in the _first_ variable, one per line (you can then pipe the output into a file, and use those in `medrs run`).
+
+## Extract from Wikipedia pages
+You can get items for papers linked from a Wikipedia page using the `refs` command, giving the wiki and the page. Example:
+```
+medrs refs enwiki Lyme_disease
+```
+This will check all external links to doi.org, PubMed, and PubMedCentral. It will extract the respective IDs, and search for them on Wikidata. If an item is found, the item ID will be printed. This will take a minute or so for pages with lots of such links/references. You might want to store the output as a unique list, like so:
+```
+medrs refs enwiki Lyme_disease | sort -u > items.txt
+```
+These lists can be used for the `--articles` parameter in `medrs run`.
