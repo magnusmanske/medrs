@@ -1,0 +1,49 @@
+#Uses 40 most recent articles from the focus list as batch
+#Demo showing neglected disease impact on MEDDATE
+SELECT DISTINCT ?article  ?articleLabel ?journal  ?journalLabel ?bound ?medrsyear ?ynow
+
+  WHERE { 
+    VALUES ?article
+          {%%ARTICLES%%}
+    
+    ?journal wdt:P31 wd:Q5633421;
+             wdt:P123 ?publisher;
+             wdt:P1055 [ ].
+    ?publisher wdt:P31/wdt:P279* wd:Q2085381.
+    ?article wdt:P5008 wd:Q55439927;
+                 wdt:P1433 ?journal;
+                 wdt:P577 ?date;
+                 wdt:P31 wd:Q7318358;
+                 wdt:P1476 [ ].
+
+  {?journal wdt:P31 wd:Q5953270} 
+  UNION {VALUES ?journal { %%JOURNALS%% }
+        } 
+   UNION {?journal wdt:P5115 [ ].}
+  
+                
+ MINUS {
+           { VALUES ?article { %%REVIEWS%% } }#List 1. Deprecated reviews (article blacklist)
+            UNION
+           {?article wdt:P5824 [ ]}
+            UNION
+           {VALUES ?publisher { %%PUBLISHERS%% }
+            }#List 4. Beall's list (publisher blacklist)
+                               
+            UNION
+           {VALUES ?article {wd:Q26746153}
+           }
+       }
+
+OPTIONAL {VALUES ?mainsubject { %%TOPICS%% }#List 2.
+          ?article wdt:P921 ?mainsubject.}
+    
+         BIND(xsd:boolean(COALESCE(BOUND(?mainsubject),"false")) AS ?bound)
+         BIND(year(?date) AS ?ydate)
+         BIND(year(now()) AS ?ynow)
+         BIND((IF(?bound,?ydate+8,?ydate+5)) AS ?medrsyear)
+         FILTER(?medrsyear >= ?ynow)
+#In general, you can remove this "filter line"
+#to see the workings of the medrsyear variable displayed
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".}
+   }
